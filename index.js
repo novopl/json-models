@@ -17,13 +17,7 @@ const jsonschema = require('jsonschema');
 const util = require('./util');
 
 
-/**
- *
- */
 class TypedModel {
-  /**
-   *
-   */
   constructor(values) {
     values = values || {};
     const errors = this.constructor.validate(values);
@@ -36,9 +30,6 @@ class TypedModel {
     Object.assign(this, buildObject(schema, values));
   }
 
-  /**
-   *
-   */
   static getSchema({ leaveModels = false } = {}) {
     // Inherit props from the base class.
     const props = {
@@ -65,9 +56,6 @@ class TypedModel {
     }
   }
 
-  /**
-   *
-   */
   asObject() {
     return util.mapObject(this.constructor.props, (name, propSchema) => {
       const value = this[name];
@@ -80,16 +68,10 @@ class TypedModel {
     });
   }
 
-  /**
-   *
-   */
   asJson(indent) {
     return JSON.stringify(this.asObject(), null, indent);
   }
 
-  /**
-   *
-   */
   static validate(values) {
     const result = jsonschema.validate(values, this.getSchema());
 

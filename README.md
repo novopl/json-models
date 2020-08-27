@@ -4,6 +4,8 @@
 # **typed-models** - Simple JSONSchema based model system.
 
 
+## About
+
 The purpose of this library is to help create an internal typed data structure
 that can be used by the backend independently of the HTTP or database layers.
 
@@ -19,6 +21,18 @@ that is defined by a JSONSchema. It supports both inheriting and nesting
 schemas. If you subclass an existing model, you will inherit all it's
 properties (and those of it's base classes). You can also nest models to achieve
 tree like structures. Arrays are of course also supported.
+
+
+### Useful Links
+
+* [Source Code](https://github.com/novopl/typed-models)
+* [CI Builds](https://app.circleci.com/pipelines/github/novopl/typed-models)
+
+
+## Installation
+
+    npm i typed-models
+    yarn add typed-models
 
 
 ## Example
@@ -120,9 +134,9 @@ console.log(order.asJson(2))
   "table": {
     "number": 11,
     "people": [
-      {"name": "John", "surname": "Doe"},
-      {"name": "Jack", "surname": "Doe"},
-      {"name": "Jill", "surname": "Doe"},
+      {"name": "John", "surname": "Doe", "fullName": "John Doe"},
+      {"name": "Jack", "surname": "Doe", "fullName": "Jack Doe"},
+      {"name": "Jill", "surname": "Doe", "fullName": "Jill Doe"},
     ] 
   }
 }
