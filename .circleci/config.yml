@@ -65,8 +65,9 @@ jobs:
           command: yarn publish
 
       - run:
-          name: Authorize github.com host
+          name: Make sure we can push the release tag
           command: |
+            mkdir -p ~/.ssh
             echo -r "Host\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
       - run:
