@@ -1,8 +1,8 @@
 const { expect } = require('chai');
-const { JsonModel, isModel, isModelClass } = require('../index');
+const { TypedModel, isModel, isModelClass } = require('../index');
 
 
-class User extends JsonModel {
+class User extends TypedModel {
   static props = {
     'name': { type: 'string', default: 'John' },
     'surname': { type: 'string', default: 'Doe' },
@@ -15,7 +15,7 @@ class User extends JsonModel {
 }
 
 
-class Order extends JsonModel {
+class Order extends TypedModel {
   static description = "Example nested model.";
   static props = {
     'id': { type: 'number', default: 1 },
@@ -24,7 +24,7 @@ class Order extends JsonModel {
 }
 
 
-class Pizza extends JsonModel {
+class Pizza extends TypedModel {
   static props = {
     'name': {type: 'string'},
     'ingredients': {type: 'array', items: {type: 'string'}},
@@ -32,7 +32,7 @@ class Pizza extends JsonModel {
 }
 
 
-class Table extends JsonModel {
+class Table extends TypedModel {
   static props = {
     'number': {type: 'number'},
     'people': {type: 'array', items: { type: User }},
@@ -147,7 +147,7 @@ describe('BusinessModel', () => {
 
 
     it('Supports nested object schemas', () => {
-      class TestModel extends JsonModel {
+      class TestModel extends TypedModel {
         static props = {
           'nested': {
             type: 'object',
@@ -176,7 +176,7 @@ describe('BusinessModel', () => {
 
 
     it('Supports Double nested schemas', () => {
-      class TestModel extends JsonModel {
+      class TestModel extends TypedModel {
         static props = {
           'nested': {
             type: 'object',
@@ -202,7 +202,7 @@ describe('BusinessModel', () => {
 
 
     it('Subclass inherits properties from the base class', () => {
-      class Base extends JsonModel {
+      class Base extends TypedModel {
         static props = {
           'prop1': {type: 'string'},
         };
@@ -222,7 +222,7 @@ describe('BusinessModel', () => {
 
 
     it('Subclass can override base class field', () => {
-      class Base extends JsonModel {
+      class Base extends TypedModel {
         static props = {
           'prop1': {type: 'string'},
           'prop2': {type: 'string'},
@@ -243,7 +243,7 @@ describe('BusinessModel', () => {
 
 
     it('Inheritance works across multiple levels', () => {
-      class A extends JsonModel { static props = { 'prop1': {type: 'string'} }; }
+      class A extends TypedModel { static props = { 'prop1': {type: 'string'} }; }
       class B extends A             { static props = { 'prop2': {type: 'string'} }; }
       class C extends B             { static props = { 'prop3': {type: 'string'} }; }
 
@@ -256,7 +256,7 @@ describe('BusinessModel', () => {
 
 
     it('Works even if one of the classes does not specify props', () => {
-      class A extends JsonModel { static props = { 'prop1': {type: 'string'} }; }
+      class A extends TypedModel { static props = { 'prop1': {type: 'string'} }; }
       class B extends A             { }
       class C extends B             { static props = { 'prop3': {type: 'string'} }; }
 
@@ -339,7 +339,7 @@ describe('BusinessModel', () => {
     });
 
     it('Passes down leaveModels configuration', () => {
-      class DoubleNest extends JsonModel {
+      class DoubleNest extends TypedModel {
         static props = {
           order: {type: Order},
           nested: {

@@ -20,7 +20,7 @@ const util = require('./util');
 /**
  *
  */
-class JsonModel {
+class TypedModel {
   /**
    *
    */
@@ -98,14 +98,14 @@ class JsonModel {
 }
 
 
-const isModel = obj => obj instanceof JsonModel;
-const isModelClass = cls => cls.prototype instanceof JsonModel;
+const isModel = obj => obj instanceof TypedModel;
+const isModelClass = cls => cls.prototype instanceof TypedModel;
 
 
 function collectBaseProps(ModelCls) {
   const baseClasses = [];
 
-  for (let b = Object.getPrototypeOf(ModelCls); b !== JsonModel; b = Object.getPrototypeOf(b)) {
+  for (let b = Object.getPrototypeOf(ModelCls); b !== TypedModel; b = Object.getPrototypeOf(b)) {
     baseClasses.push(b);
   }
 
@@ -159,7 +159,7 @@ function buildArray(schema, data) {
 
 
 module.exports = {
-  JsonModel: JsonModel,
+  TypedModel,
   isModel,
   isModelClass,
 };

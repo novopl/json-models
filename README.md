@@ -1,4 +1,4 @@
-# **json-models** - Simple JSONSchema based model system.
+# **typed-models** - Simple JSONSchema based model system.
 
 
 The purpose of this library is to help create an internal typed data structure
@@ -11,7 +11,7 @@ to/from database models and HTTP requests/responses. Having the schema attached
 means we can do proper validation during the conversions thus giving additional
 protection to the actual data sinks/sources.
 
-**json-models** allows to create classes with methods built around an object
+**typed-models** allows to create classes with methods built around an object
 that is defined by a JSONSchema. It supports both inheriting and nesting
 schemas. If you subclass an existing model, you will inherit all it's
 properties (and those of it's base classes). You can also nest models to achieve
@@ -24,13 +24,13 @@ Take a look at `tests/index.js` - all tests are written as small examples of
 what the library can do.
 
 Let's suppose we want to model an order for a pizza restaurant. Here's how you
-would define one using **json-models**:
+would define one using **typed-models**:
 
 ```javascript
-const { JsonModel } = require('json-models')
+const { TypedModel } = require('typed-models')
 
 
-class Person extends JsonModel {
+class Person extends TypedModel {
   static props = {
     'name': { type: 'string', default: 'John' },
     'surname': { type: 'string', default: 'Doe' },
@@ -43,7 +43,7 @@ class Person extends JsonModel {
 }
 
 
-class Table extends JsonModel {
+class Table extends TypedModel {
   static props = {
     'number': {type: 'number'},
     'people': {type: 'array', items: { type: Person }},
@@ -51,7 +51,7 @@ class Table extends JsonModel {
 }
 
 
-class Pizza extends JsonModel {
+class Pizza extends TypedModel {
   static props = {
     'name': {type: 'string'},
     'ingredients': {type: 'array', items: {type: 'string'}},
@@ -59,7 +59,7 @@ class Pizza extends JsonModel {
 }
 
 
-class Order extends JsonModel {
+class Order extends TypedModel {
   static description = "Example nested model.";
   static props = {
     'id': { type: 'number', default: 1 },
