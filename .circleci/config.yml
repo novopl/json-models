@@ -65,7 +65,6 @@ jobs:
           command: |
             echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
             yarn tag:release
-            git tag -d $(yarn -s pkgver)
             git push origin $(yarn -s pkgver)
 
 
