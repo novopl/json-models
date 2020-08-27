@@ -37,8 +37,9 @@ tree like structures. Arrays are of course also supported.
 
 ## Example
 
-Take a look at `tests/index.js` - all tests are written as small examples of
-what the library can do.
+*You can find this example in [./examples/example.js](examples/example.js).
+You can also take a look at [./tests/index.spec.js](tests/index.spec.js) - all
+tests are written as small examples of what the library can do.*
 
 Let's suppose we want to model an order for a pizza restaurant. Here's how you
 would define one using **typed-models**:
@@ -123,7 +124,7 @@ string or set it to a chosen value if you need a readable version to log or show
 somewhere.
 
 ```javascript
-console.log(order.asJson(2))
+console.log(order.asJson(2));
 /*
 {
   "id": 1,
@@ -159,6 +160,86 @@ Of course you can always get the JSONSchema for any given model:
 
 ```javascript
 console.log(JSON.stringify(Order.getSchema(), null, 2));
+/* RESULT:
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "Order",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "number",
+      "default": 1
+    },
+    "pizza": {
+      "$schema": "http://json-schema.org/schema#",
+      "$id": "Pizza",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "table": {
+      "$schema": "http://json-schema.org/schema#",
+      "$id": "Table",
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "number"
+        },
+        "people": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+*/
+```
+
+If you want to add or overwrite any of the generated properties within the
+returned schema, you can use the static `schema` property for that:
+
+```javascript
+class TestModel extends TypedModel {
+  static props = {
+    'name': {type: 'string'},
+  };
+  static schema = {
+    additionalProperties: true,
+    required: ['name'],
+  };
+}
+
+console.log(JSON.stringify(TestModel.getSchema(), null, 2));
+/* RESULT:
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "TestModel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "required": [
+    "name"
+  ]
+}
+*/
+
 ```
 
 But there are also a few helpers for validation to make it easier:

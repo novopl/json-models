@@ -50,9 +50,8 @@ class TypedModel {
           : value
       ])),
       additionalProperties: false,
-      // We do not want to have a description field if not given. Setting it
-      // to undefined will create it, it just won't show in many places.
-      ...(this.description ? {description: this.description} : {}),
+      // You can customize the schema using static schema property.
+      ...(this.schema || {}),
     }
   }
 
