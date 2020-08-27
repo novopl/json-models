@@ -1,4 +1,7 @@
-# **json-models** - Simple JSONSchema based model system.
+[![novopl](https://circleci.com/gh/novopl/typed-models.svg?style=shield)](https://app.circleci.com/pipelines/github/novopl/typed-models)
+[![codecov](https://codecov.io/gh/novopl/typed-models/branch/master/graph/badge.svg)](https://codecov.io/gh/novopl/typed-models)
+
+# **typed-models** - Simple JSONSchema based model system.
 
 
 The purpose of this library is to help create an internal typed data structure
@@ -11,7 +14,7 @@ to/from database models and HTTP requests/responses. Having the schema attached
 means we can do proper validation during the conversions thus giving additional
 protection to the actual data sinks/sources.
 
-**json-models** allows to create classes with methods built around an object
+**typed-models** allows to create classes with methods built around an object
 that is defined by a JSONSchema. It supports both inheriting and nesting
 schemas. If you subclass an existing model, you will inherit all it's
 properties (and those of it's base classes). You can also nest models to achieve
@@ -23,11 +26,14 @@ tree like structures. Arrays are of course also supported.
 Take a look at `tests/index.js` - all tests are written as small examples of
 what the library can do.
 
+Let's suppose we want to model an order for a pizza restaurant. Here's how you
+would define one using **typed-models**:
+
 ```javascript
-const { JsonModel } = require('json-models')
+const { TypedModel } = require('typed-models')
 
 
-class Person extends JsonModel {
+class Person extends TypedModel {
   static props = {
     'name': { type: 'string', default: 'John' },
     'surname': { type: 'string', default: 'Doe' },
@@ -40,7 +46,7 @@ class Person extends JsonModel {
 }
 
 
-class Table extends JsonModel {
+class Table extends TypedModel {
   static props = {
     'number': {type: 'number'},
     'people': {type: 'array', items: { type: Person }},
@@ -48,7 +54,7 @@ class Table extends JsonModel {
 }
 
 
-class Pizza extends JsonModel {
+class Pizza extends TypedModel {
   static props = {
     'name': {type: 'string'},
     'ingredients': {type: 'array', items: {type: 'string'}},
@@ -56,7 +62,7 @@ class Pizza extends JsonModel {
 }
 
 
-class Order extends JsonModel {
+class Order extends TypedModel {
   static description = "Example nested model.";
   static props = {
     'id': { type: 'number', default: 1 },
@@ -64,8 +70,12 @@ class Order extends JsonModel {
     'table': { type: Table }
   };
 }
+```
 
+Now that we have the model, we can create an order. We will use a full
+definition here:
 
+```javascript
 const order = new Order ({
   id: 1,
   pizza: {
@@ -81,13 +91,25 @@ const order = new Order ({
     ] 
   }
 });
+```
 
+The result will be an instance of our `Order` class as well as all nested models
+being instance of their corresponding model classes.
+
+```javascript
 console.log(order instanceof Order);                      // true
 console.log(order.pizza instanceof Pizza);                // true  
 console.log(order.table instanceof Table);                // true  
 console.log(order.table.people[0] instanceof Person);     // true      
+```
 
-console.log(order.as(2))
+You can easily convert the order to a JSON string. The one optional argument is
+the indentation for the resulting JSON. Leave it empty for a smallest output
+string or set it to a chosen value if you need a readable version to log or show
+somewhere.
+
+```javascript
+console.log(order.asJson(2))
 /*
 {
   "id": 1,
@@ -105,10 +127,29 @@ console.log(order.as(2))
   }
 }
 */
+```
 
-// Convert to a plain Javascript object (no classes inside).
+There's also an easy way to convert the model instance into a plain JSON object
+(all model classes will be converted to plain objects).
+
+```javascript
 const obj = order.asObject();
 
+console.log(order instanceof Order);                      // false
+console.log(order.pizza instanceof Pizza);                // false  
+console.log(order.table instanceof Table);                // false  
+console.log(order.table.people[0] instanceof Person);     // false      
+```
+
+Of course you can always get the JSONSchema for any given model:
+
+```javascript
+console.log(JSON.stringify(Order.getSchema(), null, 2));
+```
+
+But there are also a few helpers for validation to make it easier:
+
+```javascript
 const values = {
   // A dictionary of values, we used one to build the order earlier in this example.
   // ...

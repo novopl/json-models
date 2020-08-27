@@ -1,0 +1,78 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+
+      - restore_cache:
+          name: Restore Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Install deps
+          command: yarn install --frozen-lockfile
+
+      - run:
+          name: Lint
+          command: yarn lint
+
+      - run:
+          name: Run tests
+          command: yarn test
+
+      - run:
+          name: Show coverage
+          command: ls -la coverage
+
+      - run:
+          name: Upload coverage report
+          command: yarn codecov
+
+      - save_cache:
+          name: Save Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+
+      - persist_to_workspace:
+          root: .
+          paths: .
+
+  publish:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/.npmrc
+
+      - run:
+          name: Publish package
+          command: yarn publish
+
+      - run:
+          name: Tag the release
+          command: |
+            yarn tag:release
+            git push origin $(yarn --silent pkgver)
+
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build
+
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

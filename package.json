@@ -1,11 +1,14 @@
 {
-  "name": "json-models",
-  "version": "0.90.0",
+  "name": "typed-models",
+  "version": "0.91.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "jest ./tests",
-    "lint": "eslint"
+    "lint": "eslint",
+    "codecov": "codecov",
+    "pkgver": "node -p -e \"require('./package.json').version\"",
+    "tag:release": "git -c \"user.name=$(git show -s --format=%an)\"  -c \"user.email=$(git show -s --format=%ae)\" tag -a $(yarn --silent pkgver) -m \"v$(yarn --silent pkgver) release\""
   },
   "author": "Mateusz Klos",
   "license": "Apache-2.0",
@@ -22,7 +25,8 @@
     "collectCoverage": true,
     "coverageReporters": [
       "text",
-      "html"
+      "html",
+      "lcov"
     ],
     "coverageThreshold": {
       "global": {
@@ -78,6 +82,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "codecov": "^3.7.2",
     "eslint": "^7.7.0",
     "faker": "^5.0.0",
     "jest": "^26.4.2"
