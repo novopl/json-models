@@ -70,7 +70,7 @@ jobs:
           command: |
             echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
             yarn tag:release
-            git push origin $(yarn -s pkgver)
+            yarn tag:push
 
 
 workflows:
