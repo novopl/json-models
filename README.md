@@ -23,6 +23,9 @@ tree like structures. Arrays are of course also supported.
 Take a look at `tests/index.js` - all tests are written as small examples of
 what the library can do.
 
+Let's suppose we want to model an order for a pizza restaurant. Here's how you
+would define one using **json-models**:
+
 ```javascript
 const { JsonModel } = require('json-models')
 
@@ -64,8 +67,12 @@ class Order extends JsonModel {
     'table': { type: Table }
   };
 }
+```
 
+Now that we have the model, we can create an order. We will use a full
+definition here:
 
+```javascript
 const order = new Order ({
   id: 1,
   pizza: {
@@ -81,13 +88,25 @@ const order = new Order ({
     ] 
   }
 });
+```
 
+The result will be an instance of our `Order` class as well as all nested models
+being instance of their corresponding model classes.
+
+```javascript
 console.log(order instanceof Order);                      // true
 console.log(order.pizza instanceof Pizza);                // true  
 console.log(order.table instanceof Table);                // true  
 console.log(order.table.people[0] instanceof Person);     // true      
+```
 
-console.log(order.as(2))
+You can easily convert the order to a JSON string. The one optional argument is
+the indentation for the resulting JSON. Leave it empty for a smallest output
+string or set it to a chosen value if you need a readable version to log or show
+somewhere.
+
+```javascript
+console.log(order.asJson(2))
 /*
 {
   "id": 1,
@@ -105,10 +124,29 @@ console.log(order.as(2))
   }
 }
 */
+```
 
-// Convert to a plain Javascript object (no classes inside).
+There's also an easy way to convert the model instance into a plain JSON object
+(all model classes will be converted to plain objects).
+
+```javascript
 const obj = order.asObject();
 
+console.log(order instanceof Order);                      // false
+console.log(order.pizza instanceof Pizza);                // false  
+console.log(order.table instanceof Table);                // false  
+console.log(order.table.people[0] instanceof Person);     // false      
+```
+
+Of course you can always get the JSONSchema for any given model:
+
+```javascript
+console.log(JSON.stringify(Order.getSchema(), null, 2));
+```
+
+But there are also a few helpers for validation to make it easier:
+
+```javascript
 const values = {
   // A dictionary of values, we used one to build the order earlier in this example.
   // ...
