@@ -68,7 +68,7 @@ jobs:
           name: Make sure we can push the release tag
           command: |
             mkdir -p ~/.ssh
-            echo -r "Host\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+            echo -e "Host\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
       - run:
           name: Tag the release
