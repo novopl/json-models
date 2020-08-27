@@ -1,3 +1,6 @@
+[![novopl](https://circleci.com/gh/novopl/typed-models.svg?style=shield)](https://app.circleci.com/pipelines/github/novopl/typed-models)
+[![codecov](https://codecov.io/gh/novopl/typed-models/branch/master/graph/badge.svg)](https://codecov.io/gh/novopl/typed-models)
+
 # **typed-models** - Simple JSONSchema based model system.
 
 
