@@ -57,6 +57,12 @@ jobs:
           name: Publish package
           command: yarn publish
 
+      - run:
+          name: Tag the release
+          command: |
+            yarn tag:release
+            git push origin $(yarn --silent pkgver)
+
 
 workflows:
   version: 2
