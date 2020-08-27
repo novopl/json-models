@@ -65,6 +65,11 @@ jobs:
           command: yarn publish
 
       - run:
+          name: Authorize github.com host
+          command: |
+            echo -r "Host\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+      - run:
           name: Tag the release
           command: |
             echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
