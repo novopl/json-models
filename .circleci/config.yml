@@ -23,6 +23,14 @@ jobs:
           name: Run tests
           command: yarn test
 
+      - run:
+          name: Show coverage
+          command: ls -la coverage
+
+      - run:
+          name: Upload coverage report
+          command: yarn codecov
+
       - save_cache:
           name: Save Cache
           key: modules-rev1-{{ checksum "yarn.lock" }}
@@ -37,12 +45,9 @@ jobs:
     docker:
       - image: circleci/node
     steps:
+      - checkout
       - attach_workspace:
           at: .
-
-      - restore_cache:
-          name: Restore Cache
-          key: modules-rev1-{{ checksum "yarn.lock" }}
 
       - run:
           name: Authenticate with registry
@@ -58,3 +63,10 @@ workflows:
   main:
     jobs:
       - build
+
+      - publish:
+          requires:
+            - build
+#          filters:
+#            branches:
+#              only: master

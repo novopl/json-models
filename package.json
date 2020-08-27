@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest ./tests",
-    "lint": "eslint"
+    "lint": "eslint",
+    "codecov": "codecov"
   },
   "author": "Mateusz Klos",
   "license": "Apache-2.0",
@@ -22,7 +23,8 @@
     "collectCoverage": true,
     "coverageReporters": [
       "text",
-      "html"
+      "html",
+      "lcov"
     ],
     "coverageThreshold": {
       "global": {
@@ -78,6 +80,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "codecov": "^3.7.2",
     "eslint": "^7.7.0",
     "faker": "^5.0.0",
     "jest": "^26.4.2"
