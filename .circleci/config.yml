@@ -65,10 +65,6 @@ jobs:
           command: yarn publish
 
       - run:
-          name: Make sure we can push the release tag
-          command: |
-
-      - run:
           name: Tag the release
           command: |
             echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
