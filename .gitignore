@@ -1,0 +1,22 @@
+# generated
+node_modules
+coverage
+
+# 3rd party
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.node_repl_history
+.idea
+
+# logs
+logs
+*.log
+
+# dependencies
+/.pnp
+.pnp.js
+
+# misc
+.DS_Store
