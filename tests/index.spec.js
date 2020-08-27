@@ -16,7 +16,10 @@ class User extends TypedModel {
 
 
 class Order extends TypedModel {
-  static description = "Example nested model.";
+  static schema = {
+    description: 'Example nested model.',
+    additionalProperties: true,
+  };
   static props = {
     'id': { type: 'number', default: 1 },
     'user': { type: User },
@@ -284,6 +287,7 @@ describe('BusinessModel', () => {
       })
     });
 
+
     it('Works for nested models', () => {
       const schema = Order.getSchema();
 
@@ -291,7 +295,7 @@ describe('BusinessModel', () => {
         $schema: 'http://json-schema.org/schema#',
         $id: 'Order',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: true,
         description: 'Example nested model.',
         properties: {
           'id': { type: 'number', default: 1 },
@@ -310,17 +314,21 @@ describe('BusinessModel', () => {
       })
     });
 
-    it("Will not include description if not given", () => {
+
+    it('Can extend schema using static schema property', () => {
+      const schema = Order.getSchema();
+
+      expect(schema.description).to.equal('Example nested model.');
+      expect(schema.additionalProperties).to.equal(true);
+    });
+
+
+    it('Will not include description if not given', () => {
       const schema = User.getSchema();
 
       expect(schema.hasOwnProperty('description')).to.not.be.true;
     });
 
-    it("Will include description if given", () => {
-      const schema = Order.getSchema();
-
-      expect(schema.description).to.equal('Example nested model.');
-    });
 
     it('Can leave models in the schema.', () => {
       const schema = Order.getSchema({ leaveModels: true });
@@ -329,7 +337,7 @@ describe('BusinessModel', () => {
         $schema: 'http://json-schema.org/schema#',
         $id: 'Order',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: true,
         description: 'Example nested model.',
         properties: {
           'id': { type: 'number', default: 1 },
@@ -337,6 +345,7 @@ describe('BusinessModel', () => {
         },
       })
     });
+
 
     it('Passes down leaveModels configuration', () => {
       class DoubleNest extends TypedModel {
