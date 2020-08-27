@@ -8,7 +8,7 @@
     "lint": "eslint",
     "codecov": "codecov",
     "pkgver": "node -p -e \"require('./package.json').version\"",
-    "tag:release": "git -c \"user.name=$(git show -s --format=%an)\"  -c \"user.email=$(git show -s --format=%ae)\" tag -a $(yarn --silent pkgver) -m \"v$(yarn --silent pkgver) release\"",
+    "tag:release": "git -c 'user.name=$(git show -s --format=%an' -c 'user.email=$(git show -s --format=%ae)' tag -a $(yarn -s pkgver) -m \"v$(yarn -s pkgver) release\"",
     "release": "yarn publish --non-interactive"
   },
   "author": "Mateusz Klos",

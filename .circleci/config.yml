@@ -45,9 +45,12 @@ jobs:
     docker:
       - image: circleci/node
     steps:
-      - checkout
       - attach_workspace:
           at: .
+
+      - run:
+          name: show contents
+          command: ls -la
 
       - run:
           name: Authenticate with registry
@@ -60,8 +63,10 @@ jobs:
       - run:
           name: Tag the release
           command: |
+            echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
             yarn tag:release
-            git push origin $(yarn --silent pkgver)
+            git tag -d $(yarn -s pkgver)
+            git push origin $(yarn -s pkgver)
 
 
 workflows:
