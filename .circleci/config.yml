@@ -29,6 +29,28 @@ jobs:
           paths:
             - ./node_modules
 
+      - persist_to_workspace:
+          root: .
+          paths: .
+
+  publish:
+    docker:
+      - image: circleci/node
+    steps:
+      - attach_workspace:
+          at: .
+
+      - restore_cache:
+          name: Restore Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/.npmrc
+
+#      - run:
+#          name: Publish package
+#          command: yarn publish
 
 
 workflows:
