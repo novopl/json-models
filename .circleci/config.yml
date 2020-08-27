@@ -48,6 +48,11 @@ jobs:
       - attach_workspace:
           at: .
 
+      - add_ssh_keys:
+          fingerprints:
+            - SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
+            - nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
+
       - run:
           name: show contents
           command: ls -la
