@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+
+      - restore_cache:
+          name: Restore Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Install deps
+          command: yarn install --frozen-lockfile
+
+      - run:
+          name: Lint
+          command: yarn lint
+
+      - run:
+          name: Run tests
+          command: yarn test
+
+      - save_cache:
+          name: Save Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+
+
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build
