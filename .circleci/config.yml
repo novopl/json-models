@@ -50,8 +50,7 @@ jobs:
 
       - add_ssh_keys:
           fingerprints:
-            - SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
-            - nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
+            - ec:65:03:d0:17:96:7d:78:1a:c2:0c:f5:94:16:53:6fY
 
       - run:
           name: show contents
