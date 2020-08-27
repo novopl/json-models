@@ -268,7 +268,6 @@ describe('BusinessModel', () => {
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop3).to.equal('value3');
     });
-
   });
 
 
@@ -377,7 +376,38 @@ describe('BusinessModel', () => {
           }
         },
       });
-    })
+    });
+
+
+    it('Supports schema recursion', () => {
+      class Role extends TypedModel {
+        static props = {
+          'name': {type: 'string'},
+          'roles': {type: 'array', items: {$ref: '#'}},
+        };
+      }
+
+      const role = new Role({
+        name: 'Test',
+        roles: [
+          { name: 'Sub1' },
+          { name: 'Sub2', roles: [
+            { name: 'SubSub1' }
+          ] }
+        ],
+      });
+
+      expect(role).to.be.an.instanceof(Role);
+
+      expect(role.roles[0]).to.be.an.instanceof(Role);
+      expect(role.roles[0].name).to.equal('Sub1');
+
+      expect(role.roles[1]).to.be.an.instanceof(Role);
+      expect(role.roles[1].name).to.equal('Sub2');
+
+      expect(role.roles[1].roles[0]).to.be.an.instanceof(Role);
+      expect(role.roles[1].roles[0].name).to.equal('SubSub1');
+    });
   });
 
 

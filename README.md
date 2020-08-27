@@ -239,8 +239,35 @@ console.log(JSON.stringify(TestModel.getSchema(), null, 2));
   ]
 }
 */
-
 ```
+
+Schema recursion is also supported (with the help of **$ref**). A `{$ref: '#'}`
+will always refer to the current model schema.
+
+```javascript
+class Role extends TypedModel {
+  static props = {
+    'name': {type: 'string'},
+    'roles': {type: 'array', items: {$ref: '#'}},
+  };
+}
+
+
+const role = new Role({
+  name: 'Test',
+  roles: [
+    { name: 'Sub1' },
+    { name: 'Sub2', roles: [
+      { name: 'SubSub1' }
+    ] }
+  ],
+});
+
+console.log(role instanceof Role);                      // false
+console.log(role.roles[0] instanceof Role);             // false  
+console.log(role.roles[1].roles[0] instanceof Role);    // false  
+```
+
 
 But there are also a few helpers for validation to make it easier:
 

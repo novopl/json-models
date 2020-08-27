@@ -97,22 +97,52 @@ console.log(order.table.people[0] instanceof Person);     // false
 
 
 console.log(JSON.stringify(Order.getSchema(), null, 2));
-const asd = {
+/*
+{
   "$schema": "http://json-schema.org/schema#",
   "$id": "Order",
   "type": "object",
-  "additionalProperties": false,
-  "required": ["name"],
   "properties": {
-    "id": {"type": "number"},
+    "id": {
+      "type": "number",
+      "default": 1
+    },
     "pizza": {
-      "type": "string"
+      "$schema": "http://json-schema.org/schema#",
+      "$id": "Pizza",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "table": {
-      "type": "string"
+      "$schema": "http://json-schema.org/schema#",
+      "$id": "Table",
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "number"
+        },
+        "people": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "additionalProperties": false
     }
-  }
-};
+  },
+  "additionalProperties": false
+}
+ */
 
 
 
@@ -129,19 +159,6 @@ class TestModel extends TypedModel{
 console.log(JSON.stringify(TestModel.getSchema(), null, 2));
 /*
 {
-  "type": "object",
-  "$schema": 'http://json-schema.org/schema#",
-  "$id": "TestModel",
-  "type": "object",
-  "additionalProperties": true,
-  "required": ["name"],
-  "properties": {
-    "name": {"type": "string"}
-  }
-}
-*/
-/*
-{
   "$schema": "http://json-schema.org/schema#",
   "$id": "TestModel",
   "type": "object",
@@ -155,5 +172,4 @@ console.log(JSON.stringify(TestModel.getSchema(), null, 2));
     "name"
   ]
 }
-
- */
+*/
