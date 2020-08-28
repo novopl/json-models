@@ -268,6 +268,38 @@ describe('BusinessModel', () => {
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop3).to.equal('value3');
     });
+
+
+    it('Supports custom string formats', () => {
+      TypedModel.formats.register('date', {
+        fromString: str => new Date(str),
+        toString: value => {
+          const datestr = value.toISOString();
+          return datestr.substr(0, datestr.indexOf('T'));
+        },
+      });
+      TypedModel.formats.register('date-time', {
+        fromString: str => new Date(str),
+        toString: value => value.toISOString(),
+      });
+
+      class TestModel extends TypedModel {
+        static props = {
+          'createdAt': {type: 'string', format: 'date-time'},
+          'validUntil': {type: 'string', format: 'date'},
+        };
+      }
+
+      const obj = new TestModel({
+        createdAt: new Date().toISOString(),
+        validUntil: new Date(2020, 10, 10),
+      });
+      const data = obj.asObject();
+
+      expect(obj.createdAt).to.be.an.instanceof(Date);
+      expect(typeof data.createdAt).to.equal('string');
+      expect(data.validUntil).to.equal('2020-11-10')
+    });
   });
 
 

@@ -17,7 +17,27 @@ const jsonschema = require('jsonschema');
 const util = require('./util');
 
 
+class FormatManager {
+  constructor() {
+    this.formats = {};
+  }
+
+  register(name, { toString, fromString }) {
+    if (this.formats[name]) {
+      throw new Error(`Format already registered: ${name}`);
+    }
+    this.formats[name] = { toString, fromString };
+  }
+
+  find(name) {
+    return this.formats[name];
+  }
+}
+
+
 class TypedModel {
+  static formats = new FormatManager();
+
   constructor(values) {
     values = values || {};
     const errors = this.constructor.validate(values);
@@ -58,11 +78,19 @@ class TypedModel {
   asObject() {
     return util.mapObject(this.constructor.props, (name, propSchema) => {
       const value = this[name];
-      const processed = (value === undefined)
-        ? undefined
-        : isModelClass(propSchema.type)
-          ? value.asObject()
-          : value;
+      let processed;
+
+      if (value === undefined)
+        processed = undefined;
+      else if (isModelClass(propSchema.type))
+        processed = value.asObject();
+      else if (propSchema.type === 'string' && propSchema.format && typeof value !== 'string') {
+        const format = TypedModel.formats.find(propSchema.format);
+        processed = format ? format.toString(value) : value.toString();
+      }
+      else
+        processed = value;
+
       return [ name, processed ];
     });
   }
@@ -99,49 +127,79 @@ function collectBaseProps(ModelCls) {
 }
 
 
-function buildObject(schema, values, refs) {
+function buildObject(name, schema, values, refs) {
   const result = {};
 
   Object.entries(schema.properties)
     // Skip read only fields. We should not try to write them.
     .filter(([_, propSchema]) => !propSchema.readOnly)
-    .forEach(([name, propSchema]) => {
-      const value = buildValue(propSchema, values[name], refs);
-      result[name] = value;
+    .forEach(([propName, propSchema]) => {
+      const value = buildValue(
+        `${name}.${propName}`,
+        propSchema,
+        values[propName],
+        refs
+      );
+      result[propName] = value;
     });
 
   return result;
 }
 
 
-function buildValue(schema, value, refs) {
-  if (value === undefined)
-    value = schema.default;
+function buildValue(name, schema, value, refs) {
+  try {
+    if (value === undefined)
+      value = schema.default;
 
-  if (value === undefined)
-    return undefined;
+    if (value === undefined || schema === undefined)
+      return undefined;
 
-  if (!schema.type && schema.$ref)
-    schema = { type: refs[schema.$ref] };
+    if (!schema.type && schema.$ref)
+      schema = { type: refs[schema.$ref] };
 
-  if (schema.type === 'array')
-    return buildArray(schema, value, refs);
+    if (schema.type === 'array')
+      return buildArray(name, schema, value, refs);
 
-  if (schema.type === 'object')
-    return buildObject(schema, value, refs);
+    if (schema.type === 'object')
+      return buildObject(name, schema, value, refs);
 
-  if (isModelClass(schema.type))
-    return new schema.type(value);
+    if (isModelClass(schema.type))
+      return new schema.type(value);
 
-  return value;
+    if (schema.type === 'string' && schema.format) {
+      const format = TypedModel.formats.find(schema.format);
+      return format ? format.fromString(value) : value;
+    }
+
+    return value;
+  } catch (err) {
+    console.error(`==> ${name}`, err);
+    err.traceback = err.traceback || [];
+    err.traceback.push(name);
+    throw err;
+  }
 }
 
 
-function buildArray(schema, data, refs) {
-  return data.map(x => (
-    buildValue(schema.items, x, refs)
+function buildArray(name, schema, data, refs) {
+  return data.map((x, idx) => (
+    buildValue(`${name}[${idx}]`, schema.items, x, refs)
   ));
 }
+
+// handle date and date-time formats out of the box (can be overwritten).
+TypedModel.formats.register('date', {
+  fromString: str => new Date(str),
+  toString: value => {
+    const datestr = value.toISOString();
+    return datestr.substr(0, datestr.indexOf('T'));
+  },
+});
+TypedModel.formats.register('date-time', {
+  fromString: str => new Date(str),
+  toString: value => value.toISOString(),
+});
 
 
 module.exports = {
