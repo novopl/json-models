@@ -24,7 +24,7 @@ class FormatManager {
 
   register(name, { toString, fromString }) {
     if (this.formats[name]) {
-      throw new Error(`Format already registered: ${name}`);
+      console.warn(`Format already registered: ${name}`);
     }
     this.formats[name] = { toString, fromString };
   }
@@ -40,28 +40,29 @@ class TypedModel {
 
   constructor(values) {
     values = values || {};
-    const errors = this.constructor.validate(values);
-
-    if (errors) {
-      throw new Error(`Invalid values: ${util.json(values, 2)}: ${util.json(errors, 2)}`);
-    }
 
     const schema = this.constructor.getSchema({ leaveModels: true });
-    Object.assign(this, buildObject(schema, values, {'#': this.constructor}));
+    Object.assign(this, buildObject('$', schema, values, {'#': this.constructor}));
+  }
+
+  static get allProps() {
+    // Inherit props from the base class.
+    return util.mapObject(
+      {
+        ...collectBaseProps(this),
+        ...this.props,
+      },
+      // Filter out props set to undefined so they are not part of the schema.
+      (name, value) => value === undefined ? undefined : [name, value]
+    );
   }
 
   static getSchema({ leaveModels = false } = {}) {
-    // Inherit props from the base class.
-    const props = {
-      ...collectBaseProps(this),
-      ...this.props,
-    };
-
     return {
       $schema: 'http://json-schema.org/schema#',
       $id: this.name,
       type: 'object',
-      properties: util.mapObject(props, (name, value) => ([
+      properties: util.mapObject(this.allProps, (name, value) => ([
         name,
         (isModelClass(value.type) && !leaveModels)
           // We don't need to pass leaveModels as if models are left, we will never
@@ -76,7 +77,7 @@ class TypedModel {
   }
 
   asObject() {
-    return util.mapObject(this.constructor.props, (name, propSchema) => {
+    return util.mapObject(this.constructor.allProps, (name, propSchema) => {
       const value = this[name];
       let processed;
 
@@ -100,9 +101,9 @@ class TypedModel {
   }
 
   static validate(values) {
-    const result = jsonschema.validate(values, this.getSchema());
+    const err = jsonschema.validate(values, this.getSchema());
 
-    return (result.errors.length > 0) ? result.errors : undefined;
+    return (err.errors.length > 0) ? err : undefined;
   }
 }
 

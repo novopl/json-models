@@ -99,16 +99,6 @@ describe('BusinessModel', () => {
     });
 
 
-    it('Throws when the data does not match the schema', () => {
-      expect(() => {
-        new User({
-          firstName: 'John',
-          lastName: 'Doe',
-        });
-      }).to.throw();
-    });
-
-
     it("Won't try to construct sub model if it's value is undefined", () => {
       const order = new Order();
 
@@ -221,6 +211,10 @@ describe('BusinessModel', () => {
 
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop2).to.equal('value2');
+      expect(instance.asObject()).to.eql({
+        prop1: 'value1',
+        prop2: 'value2',
+      })
     });
 
 
@@ -255,6 +249,11 @@ describe('BusinessModel', () => {
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop2).to.equal('value2');
       expect(instance.prop3).to.equal('value3');
+      expect(instance.asObject()).to.eql({
+        prop1: 'value1',
+        prop2: 'value2',
+        prop3: 'value3',
+      })
     });
 
 
@@ -268,6 +267,47 @@ describe('BusinessModel', () => {
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop3).to.equal('value3');
     });
+
+
+    it('Can remove inherited properties by setting their schema to undefined', () => {
+      class InvalidBase extends TypedModel {
+        static props = {
+          'name': {type: 'string'},
+          'key': {type: 'string'},
+          'items': {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                'key': {type: 'string'},
+                'value': {type: 'number'},
+              }
+            }
+          },
+        };
+      }
+
+      class Invalid extends InvalidBase {
+        static props = {
+          'key': undefined,
+        }
+
+      }
+
+      try {
+        const object = new Invalid({
+          name: 'Invalid',
+          items: [
+            {key: 'item1', value: 1},
+            {key: 'item2', value: 2},
+            {key: 'item3', value: 3},
+          ]
+        });
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    })
 
 
     it('Supports custom string formats', () => {
@@ -517,6 +557,18 @@ describe('BusinessModel', () => {
       });
     })
   });
+
+
+  describe('validate()', () => {
+    it('Throws when the data does not match the schema', () => {
+      const err = User.validate({
+        firstName: 'John',
+        lastName: 'Doe',
+      });
+
+      expect(err).to.not.be.undefined;
+    });
+  })
 });
 
 
