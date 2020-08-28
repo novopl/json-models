@@ -307,22 +307,10 @@ describe('BusinessModel', () => {
         console.error(err);
         throw err;
       }
-    })
+    });
 
 
-    it('Supports custom string formats', () => {
-      TypedModel.formats.register('date', {
-        fromString: str => new Date(str),
-        toString: value => {
-          const datestr = value.toISOString();
-          return datestr.substr(0, datestr.indexOf('T'));
-        },
-      });
-      TypedModel.formats.register('date-time', {
-        fromString: str => new Date(str),
-        toString: value => value.toISOString(),
-      });
-
+    it('Supports date and date-time formats out of the box', () => {
       class TestModel extends TypedModel {
         static props = {
           'createdAt': {type: 'string', format: 'date-time'},
@@ -330,15 +318,56 @@ describe('BusinessModel', () => {
         };
       }
 
-      const obj = new TestModel({
+      const instance = new TestModel({
         createdAt: new Date().toISOString(),
         validUntil: new Date(2020, 10, 10),
       });
-      const data = obj.asObject();
+      const obj = instance.asObject();
 
-      expect(obj.createdAt).to.be.an.instanceof(Date);
-      expect(typeof data.createdAt).to.equal('string');
-      expect(data.validUntil).to.equal('2020-11-10')
+      expect(instance.createdAt).to.be.an.instanceof(Date);
+      expect(instance.validUntil).to.be.an.instanceof(Date);
+      expect(typeof obj.createdAt).to.equal('string');
+      expect(obj.validUntil).to.equal('2020-11-10');
+    });
+
+
+    it('Supports custom string formats', () => {
+      class CustomModel {
+        constructor(str) {
+          this.value = str;
+        }
+
+        toString() {
+          return this.value;
+        }
+      }
+
+      TypedModel.formats.register('custom', {
+        fromString: str => new CustomModel(str),
+        toString: value => value.toString(),
+      });
+
+      class TestModel extends TypedModel {
+        static props = {
+          'createdAt': {type: 'string', format: 'date-time'},
+          'validUntil': {type: 'string', format: 'date'},
+          'custom': {type: 'string', format: 'custom'},
+          'email': {type: 'string', format: 'email'},
+        };
+      }
+
+      const instance = new TestModel({
+        createdAt: new Date().toISOString(),
+        validUntil: new Date(2020, 10, 10),
+        custom: 'asdf',
+        email: 123,
+      });
+      const obj = instance.asObject();
+
+      expect(instance.createdAt).to.be.an.instanceof(Date);
+      expect(instance.custom).to.be.an.instanceof(CustomModel);
+      expect(typeof obj.createdAt).to.equal('string');
+      expect(obj.validUntil).to.equal('2020-11-10')
     });
   });
 
@@ -560,7 +589,16 @@ describe('BusinessModel', () => {
 
 
   describe('validate()', () => {
-    it('Throws when the data does not match the schema', () => {
+    it('Returns nothing if validation was successful', () => {
+      const err = User.validate({
+        name: 'John',
+        surname: 'Doe',
+      });
+
+      expect(err).to.be.undefined;
+    });
+
+    it('Returns error if validation failed', () => {
       const err = User.validate({
         firstName: 'John',
         lastName: 'Doe',
@@ -568,7 +606,8 @@ describe('BusinessModel', () => {
 
       expect(err).to.not.be.undefined;
     });
-  })
+  });
+
 });
 
 

@@ -23,9 +23,6 @@ class FormatManager {
   }
 
   register(name, { toString, fromString }) {
-    if (this.formats[name]) {
-      console.warn(`Format already registered: ${name}`);
-    }
     this.formats[name] = { toString, fromString };
   }
 
@@ -42,7 +39,7 @@ class TypedModel {
     values = values || {};
 
     const schema = this.constructor.getSchema({ leaveModels: true });
-    Object.assign(this, buildObject('$', schema, values, {'#': this.constructor}));
+    Object.assign(this, buildObject(schema, values, {'#': this.constructor}));
   }
 
   static get allProps() {
@@ -128,64 +125,48 @@ function collectBaseProps(ModelCls) {
 }
 
 
-function buildObject(name, schema, values, refs) {
-  const result = {};
-
-  Object.entries(schema.properties)
+function buildObject(schema, values, refs) {
+  return Object.entries(schema.properties)
     // Skip read only fields. We should not try to write them.
     .filter(([_, propSchema]) => !propSchema.readOnly)
-    .forEach(([propName, propSchema]) => {
-      const value = buildValue(
-        `${name}.${propName}`,
-        propSchema,
-        values[propName],
-        refs
-      );
-      result[propName] = value;
-    });
-
-  return result;
+    .reduce((result, [propName, propSchema]) => ({
+      ...result,
+      [propName]: buildValue(propSchema, values[propName], refs)
+    }), {});
 }
 
 
-function buildValue(name, schema, value, refs) {
-  try {
-    if (value === undefined)
-      value = schema.default;
+function buildValue(schema, value, refs) {
+  if (value === undefined)
+    value = schema.default;
 
-    if (value === undefined || schema === undefined)
-      return undefined;
+  if (value === undefined || schema === undefined)
+    return undefined;
 
-    if (!schema.type && schema.$ref)
-      schema = { type: refs[schema.$ref] };
+  if (!schema.type && schema.$ref)
+    schema = { type: refs[schema.$ref] };
 
-    if (schema.type === 'array')
-      return buildArray(name, schema, value, refs);
+  if (schema.type === 'array')
+    return buildArray(schema, value, refs);
 
-    if (schema.type === 'object')
-      return buildObject(name, schema, value, refs);
+  if (schema.type === 'object')
+    return buildObject(schema, value, refs);
 
-    if (isModelClass(schema.type))
-      return new schema.type(value);
+  if (isModelClass(schema.type))
+    return new schema.type(value);
 
-    if (schema.type === 'string' && schema.format) {
-      const format = TypedModel.formats.find(schema.format);
-      return format ? format.fromString(value) : value;
-    }
-
-    return value;
-  } catch (err) {
-    console.error(`==> ${name}`, err);
-    err.traceback = err.traceback || [];
-    err.traceback.push(name);
-    throw err;
+  if (schema.type === 'string' && schema.format) {
+    const format = TypedModel.formats.find(schema.format);
+    return format ? format.fromString(value) : value;
   }
+
+  return value;
 }
 
 
-function buildArray(name, schema, data, refs) {
+function buildArray(schema, data, refs) {
   return data.map((x, idx) => (
-    buildValue(`${name}[${idx}]`, schema.items, x, refs)
+    buildValue(schema.items, x, refs)
   ));
 }
 
