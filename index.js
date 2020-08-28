@@ -27,7 +27,7 @@ class TypedModel {
     }
 
     const schema = this.constructor.getSchema({ leaveModels: true });
-    Object.assign(this, buildObject(schema, values));
+    Object.assign(this, buildObject(schema, values, {'#': this.constructor}));
   }
 
   static getSchema({ leaveModels = false } = {}) {
@@ -99,43 +99,48 @@ function collectBaseProps(ModelCls) {
 }
 
 
-function buildObject(schema, values) {
+function buildObject(schema, values, refs) {
   const result = {};
 
   Object.entries(schema.properties)
     // Skip read only fields. We should not try to write them.
     .filter(([_, propSchema]) => !propSchema.readOnly)
     .forEach(([name, propSchema]) => {
-      result[name] = buildValue(propSchema, values[name]);
+      const value = buildValue(propSchema, values[name], refs);
+      result[name] = value;
     });
 
   return result;
 }
 
 
-function buildValue(schema, value) {
+function buildValue(schema, value, refs) {
   if (value === undefined)
     value = schema.default;
 
   if (value === undefined)
     return undefined;
 
-  else if (schema.type === 'array')
-    return buildArray(schema, value);
+  if (!schema.type && schema.$ref)
+    schema = { type: refs[schema.$ref] };
 
-  else if (schema.type === 'object')
-    return buildObject(schema, value);
+  if (schema.type === 'array')
+    return buildArray(schema, value, refs);
 
-  else if (isModelClass(schema.type))
+  if (schema.type === 'object')
+    return buildObject(schema, value, refs);
+
+  if (isModelClass(schema.type))
     return new schema.type(value);
 
-  else
-    return value;
+  return value;
 }
 
 
-function buildArray(schema, data) {
-  return data.map(x => buildValue(schema.items, x));
+function buildArray(schema, data, refs) {
+  return data.map(x => (
+    buildValue(schema.items, x, refs)
+  ));
 }
 
 
