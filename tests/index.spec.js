@@ -99,16 +99,6 @@ describe('BusinessModel', () => {
     });
 
 
-    it('Throws when the data does not match the schema', () => {
-      expect(() => {
-        new User({
-          firstName: 'John',
-          lastName: 'Doe',
-        });
-      }).to.throw();
-    });
-
-
     it("Won't try to construct sub model if it's value is undefined", () => {
       const order = new Order();
 
@@ -221,6 +211,10 @@ describe('BusinessModel', () => {
 
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop2).to.equal('value2');
+      expect(instance.asObject()).to.eql({
+        prop1: 'value1',
+        prop2: 'value2',
+      })
     });
 
 
@@ -255,6 +249,11 @@ describe('BusinessModel', () => {
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop2).to.equal('value2');
       expect(instance.prop3).to.equal('value3');
+      expect(instance.asObject()).to.eql({
+        prop1: 'value1',
+        prop2: 'value2',
+        prop3: 'value3',
+      })
     });
 
 
@@ -267,6 +266,159 @@ describe('BusinessModel', () => {
 
       expect(instance.prop1).to.equal('value1');
       expect(instance.prop3).to.equal('value3');
+    });
+
+
+    it('Can remove inherited properties by setting their schema to undefined', () => {
+      class InvalidBase extends TypedModel {
+        static props = {
+          'name': {type: 'string'},
+          'key': {type: 'string'},
+          'items': {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                'key': {type: 'string'},
+                'value': {type: 'number'},
+              }
+            }
+          },
+        };
+      }
+
+      class Invalid extends InvalidBase {
+        static props = {
+          'key': undefined,
+        }
+
+      }
+
+      try {
+        const object = new Invalid({
+          name: 'Invalid',
+          items: [
+            {key: 'item1', value: 1},
+            {key: 'item2', value: 2},
+            {key: 'item3', value: 3},
+          ]
+        });
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    });
+
+
+    it('Supports date and date-time formats out of the box', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'createdAt': { type: 'string', format: 'date-time' },
+          'validUntil': { type: 'string', format: 'date' },
+        };
+      }
+
+      const instance = new TestModel({
+        createdAt: new Date().toISOString(),
+        validUntil: new Date(2020, 10, 10),
+      });
+
+      expect(instance.createdAt).to.be.an.instanceof(Date);
+      expect(instance.validUntil).to.be.an.instanceof(Date);
+
+      const obj = instance.asObject();
+      expect(typeof obj.createdAt).to.equal('string');
+      expect(obj.validUntil).to.equal('2020-11-10');
+    });
+
+
+    it('Supports custom string formats', () => {
+      class CustomModel {
+        constructor(str) {
+          this.value = str;
+        }
+
+        toString() {
+          return this.value;
+        }
+      }
+
+      TypedModel.formats.register('custom', {
+        fromString: str => new CustomModel(str),
+        toString: value => value.toString(),
+      });
+
+      class TestModel extends TypedModel {
+        static props = {
+          'custom': {type: 'string', format: 'custom'},
+        };
+      }
+
+      const instance = new TestModel({
+        custom: 'asdf',
+      });
+
+      expect(instance.custom).to.be.an.instanceof(CustomModel);
+    });
+
+
+    it('Uses raw string if no converter registered for a custom format', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'missingFormat': {type: 'string', format: 'missing'},
+        };
+      }
+
+      const instance = new TestModel({
+        missingFormat: 'asdf',
+      });
+
+      expect(typeof instance.missingFormat).to.equal('string');
+      expect(instance.missingFormat).to.equal('asdf');
+      expect(instance.asObject()).to.eql({ missingFormat: 'asdf' });
+    });
+
+
+    it('Supports functions as defaults', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'theAnswer': { type: 'number', default: () => 42 },
+        };
+      }
+
+      const instance = new TestModel();
+
+      expect(instance.theAnswer).to.equal(42);
+    });
+
+
+    it('Keeps prop trace for errors when building model instance', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'items': {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                'fixed': {type: 'number'},
+                'dynamic': {type: 'number', default: () => { throw new Error("Failed") }},
+              }
+            }
+          },
+        };
+      }
+
+      try {
+        new TestModel({
+          'items': [
+            {fixed: 12, dynamic: 32},
+            {fixed: 13, dynamic: 32},
+            {fixed: 14},
+          ]
+        });
+      } catch(err) {
+        expect(err.traceback).to.equal('$.items[2].dynamic');
+      }
     });
   });
 
@@ -422,6 +574,7 @@ describe('BusinessModel', () => {
       });
     });
 
+
     it('Works with nested schemas', () => {
       const order = new Order({
         id: 1,
@@ -443,12 +596,27 @@ describe('BusinessModel', () => {
       })
     });
 
+
     it('Wont try to process undefined values', () => {
       const order = new Order();
       const values = order.asObject();
 
       expect(values.user).to.be.undefined;
     })
+
+
+    it('Will coerce values to string if prop type is string', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'theAnswer': {type: 'string'},
+        };
+      }
+
+      const instance = new TestModel({ theAnswer: 24 });
+
+      const obj = instance.asObject();
+      expect(typeof obj.theAnswer).to.equal('string');
+    });
   });
 
 
@@ -467,6 +635,7 @@ describe('BusinessModel', () => {
       });
     });
 
+
     it('Works with nested models', () => {
       const order = new Order({
         id: 5,
@@ -484,6 +653,28 @@ describe('BusinessModel', () => {
         }
       });
     })
+  });
+
+
+  describe('validate()', () => {
+    it('Returns nothing if validation was successful', () => {
+      const err = User.validate({
+        name: 'John',
+        surname: 'Doe',
+      });
+
+      expect(err).to.be.undefined;
+    });
+
+
+    it('Returns error if validation failed', () => {
+      const err = User.validate({
+        firstName: 'John',
+        lastName: 'Doe',
+      });
+
+      expect(err).to.not.be.undefined;
+    });
   });
 });
 

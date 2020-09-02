@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node
+      - image: novopl/node12:ci
     steps:
       - checkout
 
@@ -43,14 +43,10 @@ jobs:
 
   publish:
     docker:
-      - image: circleci/node
+      - image: novopl/node12:ci
     steps:
       - attach_workspace:
           at: .
-
-      - add_ssh_keys:
-          fingerprints:
-            - "ec:65:03:d0:17:96:7d:78:1a:c2:0c:f5:94:16:53:6fY"
 
       - run:
           name: show contents
@@ -68,11 +64,13 @@ jobs:
           name: Tag the release
           command: |
             echo "Release v$(yarn -s pkgver) -- $(git show -s --format='%an <%ae>')"
+
             mkdir -p ~/.ssh
             echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
             cat ~/.ssh/config
-            yarn tag:release
-            yarn tag:push
+            peltak release tag -m "$(peltak changelog)"
+            git push origin v$(peltak version --porcelain)
 
 
 workflows:

@@ -20,9 +20,10 @@ const json = (data, indent) => JSON.stringify(data, null, indent);
 
 function mapObject(obj, mapperFn) {
   return Object.fromEntries(
-    Object.entries(obj).map(
-      (entry, index) => mapperFn(...entry, index)
-    )
+    Object.entries(obj)
+      .map((entry, index) => mapperFn(...entry, index))
+      // Returning undefined from mapperFn will remove the given entry.
+      .filter(entry => entry !== undefined)
   );
 }
 
