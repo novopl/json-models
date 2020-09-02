@@ -321,6 +321,16 @@ describe('BusinessModel', () => {
       const instance = new TestModel({
         createdAt: new Date().toISOString(),
         validUntil: new Date(2020, 10, 10),
+    })
+
+
+    it('Supports custom string formats', () => {
+      TypedModel.formats.register('date', {
+        fromString: str => new Date(str),
+        toString: value => {
+          const datestr = value.toISOString();
+          return datestr.substr(0, datestr.indexOf('T'));
+        },
       });
       const obj = instance.asObject();
 
@@ -607,7 +617,6 @@ describe('BusinessModel', () => {
       expect(err).to.not.be.undefined;
     });
   });
-
 });
 
 

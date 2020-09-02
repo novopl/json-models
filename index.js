@@ -17,21 +17,25 @@ const jsonschema = require('jsonschema');
 const util = require('./util');
 
 
+// A little helper to manage JSONSchema string formats.
 class FormatManager {
   constructor() {
     this.formats = {};
   }
 
+  // Register new string format with the given name
   register(name, { toString, fromString }) {
     this.formats[name] = { toString, fromString };
   }
 
+  // Find string format by name.
   find(name) {
     return this.formats[name];
   }
 }
 
 
+// Base class for app models.
 class TypedModel {
   static formats = new FormatManager();
 
@@ -39,13 +43,22 @@ class TypedModel {
     values = values || {};
 
     const schema = this.constructor.getSchema({ leaveModels: true });
-    Object.assign(this, buildObject(schema, values, {'#': this.constructor}));
+
+    Object.entries(buildObject('$', schema, values, {'#': this.constructor}))
+      .forEach(([name, value]) => {
+        // Do not try to write read only props.
+        const prop = Object.getOwnPropertyDescriptor(this, name);
+        if (!prop || prop.writable) {
+          this[name] = value;
+        }
+      });
   }
 
+  // Return all properties including inherited from the parent class.
   static get allProps() {
-    // Inherit props from the base class.
     return util.mapObject(
       {
+        // Inherit props from the base class.
         ...collectBaseProps(this),
         ...this.props,
       },
@@ -54,6 +67,9 @@ class TypedModel {
     );
   }
 
+  // Get JSON schema for this type.
+  //
+  // leaveModels will prevent child types to be converted to schemas
   static getSchema({ leaveModels = false } = {}) {
     return {
       $schema: 'http://json-schema.org/schema#',
@@ -73,30 +89,34 @@ class TypedModel {
     }
   }
 
+  // Convert the model instance to a plain JS object.
   asObject() {
-    return util.mapObject(this.constructor.allProps, (name, propSchema) => {
-      const value = this[name];
-      let processed;
+    return Object.entries(this.constructor.allProps)
+      .reduce((result, [name, propSchema]) => {
+        const value = this[name];
+        let processed;
 
-      if (value === undefined)
-        processed = undefined;
-      else if (isModelClass(propSchema.type))
-        processed = value.asObject();
-      else if (propSchema.type === 'string' && propSchema.format && typeof value !== 'string') {
-        const format = TypedModel.formats.find(propSchema.format);
-        processed = format ? format.toString(value) : value.toString();
-      }
-      else
-        processed = value;
+        if (value === undefined)
+          processed = undefined;
+        else if (isModelClass(propSchema.type))
+          processed = value.asObject();
+        else if (propSchema.type === 'string' && propSchema.format && typeof value !== 'string') {
+          const format = TypedModel.formats.find(propSchema.format);
+          processed = format ? format.toString(value) : value.toString();
+        }
+        else
+          processed = value;
 
-      return [ name, processed ];
-    });
+        return { ...result, [name]: processed };
+      }, {});
   }
 
+  // Convert the instance of the model to a JSON string representation.
   asJson(indent) {
     return JSON.stringify(this.asObject(), null, indent);
   }
 
+  // Validate a given set of values against the model schema.
   static validate(values) {
     const err = jsonschema.validate(values, this.getSchema());
 
@@ -109,6 +129,7 @@ const isModel = obj => obj instanceof TypedModel;
 const isModelClass = cls => cls.prototype instanceof TypedModel;
 
 
+// Collect properties from all base classes of the given model class.
 function collectBaseProps(ModelCls) {
   const baseClasses = [];
 
@@ -125,49 +146,69 @@ function collectBaseProps(ModelCls) {
 }
 
 
-function buildObject(schema, values, refs) {
+// Build an object based on values and a given schema.
+//
+// This will use defaults from the schema as well as convert all nested models
+// to instances of corresponding model classes.
+function buildObject(name, schema, values, refs) {
   return Object.entries(schema.properties)
     // Skip read only fields. We should not try to write them.
     .filter(([_, propSchema]) => !propSchema.readOnly)
     .reduce((result, [propName, propSchema]) => ({
       ...result,
-      [propName]: buildValue(propSchema, values[propName], refs)
+      [propName]: buildValue(`${name}.${propName}`, propSchema, values[propName], refs)
     }), {});
 }
 
 
-function buildValue(schema, value, refs) {
-  if (value === undefined)
-    value = schema.default;
+// Build a single value based on the schema and the given value.
+function buildValue(name, schema, value, refs) {
+  try {
+    if (value === undefined)
+      value = (typeof schema.default === 'function') ? schema.default() : schema.default;
 
-  if (value === undefined || schema === undefined)
-    return undefined;
+    if (!schema.type && schema.$ref)
+      schema = { type: refs[schema.$ref] };
 
-  if (!schema.type && schema.$ref)
-    schema = { type: refs[schema.$ref] };
+    if (schema.type === 'array')
+      return (value === undefined) ? [] : buildArray(name, schema, value, refs);
 
-  if (schema.type === 'array')
-    return buildArray(schema, value, refs);
+    if (value === undefined || schema === undefined)
+      return undefined;
 
-  if (schema.type === 'object')
-    return buildObject(schema, value, refs);
+    if (schema.type === 'object')
+      return buildObject(name, schema, value, refs);
 
-  if (isModelClass(schema.type))
-    return new schema.type(value);
+    if (isModelClass(schema.type))
+      return new schema.type(value);
 
-  if (schema.type === 'string' && schema.format) {
-    const format = TypedModel.formats.find(schema.format);
-    return format ? format.fromString(value) : value;
+    if (schema.type === 'string' && schema.format) {
+      const format = TypedModel.formats.find(schema.format);
+      return format ? format.fromString(value) : value;
+    }
+
+    return value;
   }
-
-  return value;
+  catch(err) {
+    err.traceback = err.traceback || [];
+    err.traceback.push(name);
+    throw err
+  }
 }
 
 
-function buildArray(schema, data, refs) {
-  return data.map((x, idx) => (
-    buildValue(schema.items, x, refs)
-  ));
+// Convert JSON array into a proper array object (with nested models properly
+// instantiated.
+function buildArray(name, schema, data, refs) {
+  try {
+    return data.map((x, idx) => (
+      buildValue(`${name}[${idx}]`, schema.items, x, refs)
+    ));
+  } catch (err) {
+    err.traceback = err.traceback || [];
+    err.traceback.push(name);
+    throw err
+  }
 }
 
 // handle date and date-time formats out of the box (can be overwritten).
