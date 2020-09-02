@@ -1,0 +1,25 @@
+# peltak configuration file
+# See https://github.com/novopl/peltak for more information.
+pelconf_version: '1'
+
+# A list of py modules with commands that should be available for the project.
+commands:
+  - peltak.extra.git
+  - peltak.extra.changelog
+  - peltak.extra.gitflow
+  - peltak.extra.version
+
+
+# General project settings
+build_dir: .build
+version:
+  file: 'package.json'
+
+changelog:
+  tags:
+    - header: Features
+      tag: feature
+    - header: Changes
+      tag: change
+    - header: Bug fixes
+      tag: fix
