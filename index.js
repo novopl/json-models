@@ -30,6 +30,9 @@ class FormatManager {
 
   // Find string format by name.
   find(name) {
+    if (!name)
+      return undefined;
+
     return this.formats[name];
   }
 }
@@ -45,13 +48,7 @@ class TypedModel {
     const schema = this.constructor.getSchema({ leaveModels: true });
 
     Object.entries(buildObject('$', schema, values, {'#': this.constructor}))
-      .forEach(([name, value]) => {
-        // Do not try to write read only props.
-        const prop = Object.getOwnPropertyDescriptor(this, name);
-        if (!prop || prop.writable) {
-          this[name] = value;
-        }
-      });
+      .forEach(([name, value]) => this[name] = value);
   }
 
   // Return all properties including inherited from the parent class.
@@ -100,7 +97,7 @@ class TypedModel {
           processed = undefined;
         else if (isModelClass(propSchema.type))
           processed = value.asObject();
-        else if (propSchema.type === 'string' && propSchema.format && typeof value !== 'string') {
+        else if (propSchema.type === 'string' && typeof value !== 'string') {
           const format = TypedModel.formats.find(propSchema.format);
           processed = format ? format.toString(value) : value.toString();
         }
@@ -190,8 +187,14 @@ function buildValue(name, schema, value, refs) {
     return value;
   }
   catch(err) {
-    err.traceback = err.traceback || [];
-    err.traceback.push(name);
+    // On the first catch, the name will be the most nested, do not overwrite it
+    // Inside the parent catch (values can be nested via arrays and objects).
+    if (!err.traceback) {
+      err.traceback = name;
+    }
+    // err.traceback = err.traceback || '';
+    // if (!err.traceback.startsWith(name))
+    // err.traceback.push(name);
     throw err
   }
 }
@@ -200,15 +203,9 @@ function buildValue(name, schema, value, refs) {
 // Convert JSON array into a proper array object (with nested models properly
 // instantiated.
 function buildArray(name, schema, data, refs) {
-  try {
-    return data.map((x, idx) => (
-      buildValue(`${name}[${idx}]`, schema.items, x, refs)
-    ));
-  } catch (err) {
-    err.traceback = err.traceback || [];
-    err.traceback.push(name);
-    throw err
-  }
+  return data.map((x, idx) => (
+    buildValue(`${name}[${idx}]`, schema.items, x, refs)
+  ));
 }
 
 // handle date and date-time formats out of the box (can be overwritten).

@@ -313,29 +313,20 @@ describe('BusinessModel', () => {
     it('Supports date and date-time formats out of the box', () => {
       class TestModel extends TypedModel {
         static props = {
-          'createdAt': {type: 'string', format: 'date-time'},
-          'validUntil': {type: 'string', format: 'date'},
+          'createdAt': { type: 'string', format: 'date-time' },
+          'validUntil': { type: 'string', format: 'date' },
         };
       }
 
       const instance = new TestModel({
         createdAt: new Date().toISOString(),
         validUntil: new Date(2020, 10, 10),
-    })
-
-
-    it('Supports custom string formats', () => {
-      TypedModel.formats.register('date', {
-        fromString: str => new Date(str),
-        toString: value => {
-          const datestr = value.toISOString();
-          return datestr.substr(0, datestr.indexOf('T'));
-        },
       });
-      const obj = instance.asObject();
 
       expect(instance.createdAt).to.be.an.instanceof(Date);
       expect(instance.validUntil).to.be.an.instanceof(Date);
+
+      const obj = instance.asObject();
       expect(typeof obj.createdAt).to.equal('string');
       expect(obj.validUntil).to.equal('2020-11-10');
     });
@@ -359,25 +350,75 @@ describe('BusinessModel', () => {
 
       class TestModel extends TypedModel {
         static props = {
-          'createdAt': {type: 'string', format: 'date-time'},
-          'validUntil': {type: 'string', format: 'date'},
           'custom': {type: 'string', format: 'custom'},
-          'email': {type: 'string', format: 'email'},
         };
       }
 
       const instance = new TestModel({
-        createdAt: new Date().toISOString(),
-        validUntil: new Date(2020, 10, 10),
         custom: 'asdf',
-        email: 123,
       });
-      const obj = instance.asObject();
 
-      expect(instance.createdAt).to.be.an.instanceof(Date);
       expect(instance.custom).to.be.an.instanceof(CustomModel);
-      expect(typeof obj.createdAt).to.equal('string');
-      expect(obj.validUntil).to.equal('2020-11-10')
+    });
+
+
+    it('Uses raw string if no converter registered for a custom format', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'missingFormat': {type: 'string', format: 'missing'},
+        };
+      }
+
+      const instance = new TestModel({
+        missingFormat: 'asdf',
+      });
+
+      expect(typeof instance.missingFormat).to.equal('string');
+      expect(instance.missingFormat).to.equal('asdf');
+      expect(instance.asObject()).to.eql({ missingFormat: 'asdf' });
+    });
+
+
+    it('Supports functions as defaults', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'theAnswer': { type: 'number', default: () => 42 },
+        };
+      }
+
+      const instance = new TestModel();
+
+      expect(instance.theAnswer).to.equal(42);
+    });
+
+
+    it('Keeps prop trace for errors when building model instance', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'items': {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                'fixed': {type: 'number'},
+                'dynamic': {type: 'number', default: () => { throw new Error("Failed") }},
+              }
+            }
+          },
+        };
+      }
+
+      try {
+        new TestModel({
+          'items': [
+            {fixed: 12, dynamic: 32},
+            {fixed: 13, dynamic: 32},
+            {fixed: 14},
+          ]
+        });
+      } catch(err) {
+        expect(err.traceback).to.equal('$.items[2].dynamic');
+      }
     });
   });
 
@@ -533,6 +574,7 @@ describe('BusinessModel', () => {
       });
     });
 
+
     it('Works with nested schemas', () => {
       const order = new Order({
         id: 1,
@@ -554,12 +596,27 @@ describe('BusinessModel', () => {
       })
     });
 
+
     it('Wont try to process undefined values', () => {
       const order = new Order();
       const values = order.asObject();
 
       expect(values.user).to.be.undefined;
     })
+
+
+    it('Will coerce values to string if prop type is string', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'theAnswer': {type: 'string'},
+        };
+      }
+
+      const instance = new TestModel({ theAnswer: 24 });
+
+      const obj = instance.asObject();
+      expect(typeof obj.theAnswer).to.equal('string');
+    });
   });
 
 
@@ -577,6 +634,7 @@ describe('BusinessModel', () => {
         fullName: 'John Doe',
       });
     });
+
 
     it('Works with nested models', () => {
       const order = new Order({
@@ -607,6 +665,7 @@ describe('BusinessModel', () => {
 
       expect(err).to.be.undefined;
     });
+
 
     it('Returns error if validation failed', () => {
       const err = User.validate({
