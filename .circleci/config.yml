@@ -15,6 +15,12 @@ jobs:
           name: Install deps
           command: yarn install --frozen-lockfile
 
+      - save_cache:
+          name: Save Cache
+          key: modules-rev1-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+
       - run:
           name: Lint
           command: yarn lint
@@ -30,12 +36,6 @@ jobs:
       - run:
           name: Upload coverage report
           command: yarn codecov
-
-      - save_cache:
-          name: Save Cache
-          key: modules-rev1-{{ checksum "yarn.lock" }}
-          paths:
-            - ./node_modules
 
       - persist_to_workspace:
           root: .

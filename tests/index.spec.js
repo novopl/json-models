@@ -43,7 +43,7 @@ class Table extends TypedModel {
 }
 
 
-describe('BusinessModel', () => {
+describe('TypedModel', () => {
   describe('constructor()', () => {
     it('Works with plain objects.', () => {
       const user = new User({
@@ -344,8 +344,8 @@ describe('BusinessModel', () => {
       }
 
       TypedModel.formats.register('custom', {
-        fromString: str => new CustomModel(str),
-        toString: value => value.toString(),
+        load: str => new CustomModel(str),
+        dump: value => value.toString(),
       });
 
       class TestModel extends TypedModel {
@@ -419,6 +419,30 @@ describe('BusinessModel', () => {
       } catch(err) {
         expect(err.traceback).to.equal('$.items[2].dynamic');
       }
+    });
+
+
+    it('Does not convert undefined to dates and vice-versa', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'createdAt': { type: 'string', format: 'date' },
+          'updatedAt': { type: 'string', format: 'date' },
+        };
+      }
+
+      const instance = new TestModel({
+        createdAt: undefined,
+        updatedAt: null,
+      });
+
+      expect(instance.createdAt).to.be.undefined;
+      expect(instance.updatedAt).to.be.null;
+
+      const data = instance.asObject();
+      expect(data).to.eql({
+        createdAt: undefined,
+        updatedAt: null,
+      })
     });
   });
 
