@@ -170,7 +170,7 @@ function buildValue(name, schema, value, refs) {
     if (schema.type === 'array')
       return (value === undefined) ? [] : buildArray(name, schema, value, refs);
 
-    if (value === undefined || schema === undefined)
+    if (value === undefined)
       return undefined;
 
     if (schema.type === 'object')
