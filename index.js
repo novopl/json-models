@@ -24,8 +24,8 @@ class FormatManager {
   }
 
   // Register new string format with the given name
-  register(name, { toString, fromString }) {
-    this.formats[name] = { toString, fromString };
+  register(name, { dump, load }) {
+    this.formats[name] = { dump, load };
   }
 
   // Find string format by name.
@@ -99,7 +99,7 @@ class TypedModel {
           processed = value.asObject();
         else if (propSchema.type === 'string' && typeof value !== 'string') {
           const format = TypedModel.formats.find(propSchema.format);
-          processed = format ? format.toString(value) : value && value.toString();
+          processed = format ? format.dump(value) : (value && value.toString());
         }
         else
           processed = value;
@@ -181,7 +181,7 @@ function buildValue(name, schema, value, refs) {
 
     if (schema.type === 'string' && schema.format) {
       const format = TypedModel.formats.find(schema.format);
-      return format ? format.fromString(value) : value;
+      return format ? format.load(value) : value;
     }
 
     return value;
@@ -210,8 +210,8 @@ function buildArray(name, schema, data, refs) {
 
 // handle date and date-time formats out of the box (can be overwritten).
 TypedModel.formats.register('date', {
-  fromString: str => str && new Date(str),
-  toString: value => {
+  load: str => str && new Date(str),
+  dump: value => {
     if (!value)
       return value;
 
@@ -220,8 +220,8 @@ TypedModel.formats.register('date', {
   },
 });
 TypedModel.formats.register('date-time', {
-  fromString: str => str && new Date(str),
-  toString: value => value && value.toISOString(),
+  load: str => str && new Date(str),
+  dump: value => value && value.toISOString(),
 });
 
 

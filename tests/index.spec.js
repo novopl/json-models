@@ -344,8 +344,8 @@ describe('TypedModel', () => {
       }
 
       TypedModel.formats.register('custom', {
-        fromString: str => new CustomModel(str),
-        toString: value => value.toString(),
+        load: str => new CustomModel(str),
+        dump: value => value.toString(),
       });
 
       class TestModel extends TypedModel {
