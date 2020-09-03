@@ -99,7 +99,7 @@ class TypedModel {
           processed = value.asObject();
         else if (propSchema.type === 'string' && typeof value !== 'string') {
           const format = TypedModel.formats.find(propSchema.format);
-          processed = format ? format.toString(value) : value.toString();
+          processed = format ? format.toString(value) : value && value.toString();
         }
         else
           processed = value;
@@ -210,15 +210,18 @@ function buildArray(name, schema, data, refs) {
 
 // handle date and date-time formats out of the box (can be overwritten).
 TypedModel.formats.register('date', {
-  fromString: str => new Date(str),
+  fromString: str => str && new Date(str),
   toString: value => {
+    if (!value)
+      return value;
+
     const datestr = value.toISOString();
     return datestr.substr(0, datestr.indexOf('T'));
   },
 });
 TypedModel.formats.register('date-time', {
-  fromString: str => new Date(str),
-  toString: value => value.toISOString(),
+  fromString: str => str && new Date(str),
+  toString: value => value && value.toISOString(),
 });
 
 
