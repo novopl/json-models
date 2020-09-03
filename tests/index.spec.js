@@ -444,6 +444,19 @@ describe('TypedModel', () => {
         updatedAt: null,
       })
     });
+
+    it('Format converters properly handle null value', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'imageUrl': {type: 'string'},
+        };
+      }
+
+      const instance = new TestModel({ imageUrl: null });
+
+      expect(instance.imageUrl).to.be.null;
+      expect(instance.asObject().imageUrl).to.be.null;
+    });
   });
 
 

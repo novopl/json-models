@@ -211,17 +211,11 @@ function buildArray(name, schema, data, refs) {
 // handle date and date-time formats out of the box (can be overwritten).
 TypedModel.formats.register('date', {
   load: str => str && new Date(str),
-  dump: value => {
-    if (!value)
-      return value;
-
-    const datestr = value.toISOString();
-    return datestr.substr(0, datestr.indexOf('T'));
-  },
+  dump: val => val && val.toISOString().substr(0, 10),
 });
 TypedModel.formats.register('date-time', {
   load: str => str && new Date(str),
-  dump: value => value && value.toISOString(),
+  dump: val => val && val.toISOString(),
 });
 
 
