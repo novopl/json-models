@@ -76,6 +76,7 @@
     }
   },
   "dependencies": {
+    "date-fns": "^2.16.1",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {

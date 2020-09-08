@@ -15,6 +15,7 @@
  */
 const jsonschema = require('jsonschema');
 const util = require('./util');
+const format = require('date-fns/format');
 
 
 // A little helper to manage JSONSchema string formats.
@@ -44,11 +45,10 @@ class TypedModel {
 
   constructor(values) {
     values = values || {};
-
     const schema = this.constructor.getSchema({ leaveModels: true });
+    const processedValues = buildObject('$', schema, values, {'#': this.constructor});
 
-    Object.entries(buildObject('$', schema, values, {'#': this.constructor}))
-      .forEach(([name, value]) => this[name] = value);
+    this.setValues(processedValues);
   }
 
   // Return all properties including inherited from the parent class.
@@ -86,26 +86,16 @@ class TypedModel {
     }
   }
 
+  // Validate a given set of values against the model schema.
+  static validate(values) {
+    const err = jsonschema.validate(values, this.getSchema());
+
+    return (err.errors.length > 0) ? err : undefined;
+  }
+
   // Convert the model instance to a plain JS object.
   asObject() {
-    return Object.entries(this.constructor.allProps)
-      .reduce((result, [name, propSchema]) => {
-        const value = this[name];
-        let processed;
-
-        if (value === undefined)
-          processed = undefined;
-        else if (isModelClass(propSchema.type))
-          processed = value.asObject();
-        else if (propSchema.type === 'string' && typeof value !== 'string') {
-          const format = TypedModel.formats.find(propSchema.format);
-          processed = format ? format.dump(value) : (value && value.toString());
-        }
-        else
-          processed = value;
-
-        return { ...result, [name]: processed };
-      }, {});
+    return modelAsObject(this);
   }
 
   // Convert the instance of the model to a JSON string representation.
@@ -113,11 +103,22 @@ class TypedModel {
     return JSON.stringify(this.asObject(), null, indent);
   }
 
-  // Validate a given set of values against the model schema.
-  static validate(values) {
-    const err = jsonschema.validate(values, this.getSchema());
+  setValues(values) {
+    const converters = this.constructor.converters || {};
 
-    return (err.errors.length > 0) ? err : undefined;
+    Object.entries(values).map(([name, value]) => {
+      // Do nothing if the field is not part of the model.
+      if (this.constructor.allProps[name] === undefined)
+        return;
+
+      // Check if we have a converter for this field.
+      const converter = converters[name];
+      if (converter && converter.load) {
+        [name, value] = converter.load(name, value);
+      }
+
+      this[name] = value
+    });
   }
 }
 
@@ -200,6 +201,28 @@ function buildValue(name, schema, value, refs) {
 }
 
 
+function modelAsObject(model) {
+  return Object.entries(model.constructor.allProps)
+    .reduce((result, [name, propSchema]) => {
+      const value = model[name];
+      let processed;
+
+      if (value === undefined)
+        processed = undefined;
+      else if (isModelClass(propSchema.type))
+        processed = value.asObject();
+      else if (propSchema.type === 'string' && typeof value !== 'string') {
+        const format = TypedModel.formats.find(propSchema.format);
+        processed = format ? format.dump(value) : (value && value.toString());
+      }
+      else
+        processed = value;
+
+      return { ...result, [name]: processed };
+    }, {});
+}
+
+
 // Convert JSON array into a proper array object (with nested models properly
 // instantiated.
 function buildArray(name, schema, data, refs) {
@@ -211,7 +234,7 @@ function buildArray(name, schema, data, refs) {
 // handle date and date-time formats out of the box (can be overwritten).
 TypedModel.formats.register('date', {
   load: str => str && new Date(str),
-  dump: val => val && val.toISOString().substr(0, 10),
+  dump: val => val && format(val, 'yyyy-MM-dd'),
 });
 TypedModel.formats.register('date-time', {
   load: str => str && new Date(str),
@@ -223,4 +246,5 @@ module.exports = {
   TypedModel,
   isModel,
   isModelClass,
+  modelAsObject,
 };
