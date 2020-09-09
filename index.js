@@ -104,19 +104,25 @@ class TypedModel {
   }
 
   setValues(values) {
-    const converters = this.constructor.converters || {};
+    // Set values differs from the constructor in that it won't fill in defaults
+    // if something is missing in the given values. It will simply not set those
+    // missing fields.
+    const schema = this.constructor.getSchema({ leaveModels: true });
+    const refs = {'#': this.constructor};
 
-    Object.entries(values).map(([name, value]) => {
-      // Do nothing if the field is not part of the model.
-      if (this.constructor.allProps[name] === undefined)
-        return;
+    const processed = Object.entries(schema.properties)
+      // Skip read only fields and those that are not present in *values*.
+      .filter(([propName, propSchema]) => (
+        values.hasOwnProperty(propName)
+        && !propSchema.readOnly
+      ))
+      .reduce((result, [propName, propSchema]) => ({
+        ...result,
+        [propName]: buildValue(`$.${propName}`, propSchema, values[propName], refs)
+      }), {});
 
-      // Check if we have a converter for this field.
-      const converter = converters[name];
-      if (converter && converter.load) {
-        [name, value] = converter.load(name, value);
-      }
 
+    Object.entries(processed).map(([name, value]) => {
       this[name] = value
     });
   }
@@ -210,7 +216,7 @@ function modelAsObject(model) {
       if (value === undefined)
         processed = undefined;
       else if (isModelClass(propSchema.type))
-        processed = value.asObject();
+        processed = modelAsObject(value);
       else if (propSchema.type === 'string' && typeof value !== 'string') {
         const format = TypedModel.formats.find(propSchema.format);
         processed = format ? format.dump(value) : (value && value.toString());

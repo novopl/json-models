@@ -16,13 +16,13 @@ class User extends TypedModel {
 
 
 class Order extends TypedModel {
-  static schema = {
-    description: 'Example nested model.',
-    additionalProperties: true,
-  };
   static props = {
     'id': { type: 'number', default: 1 },
     'user': { type: User },
+  };
+  static schema = {
+    description: 'Example nested model.',
+    additionalProperties: true,
   };
 }
 
@@ -711,6 +711,50 @@ describe('TypedModel', () => {
       });
 
       expect(err).to.not.be.undefined;
+    });
+  });
+
+  describe('setValues()', () => {
+    it('Does not set property if not given in values', () => {
+      const user = new User({ name: 'John', surname: 'Jones' });
+
+      user.setValues({
+        name: 'Jane',
+      });
+
+      expect(user.name).to.equal('Jane');
+      expect(user.surname).to.equal('Jones');
+      expect(user.fullName).to.equal('Jane Jones');
+    });
+
+    it('Ignores values that are not part of the model', () => {
+      const user = new User({ name: 'John', surname: 'Jones' });
+
+      user.setValues({
+        name: 'Jane',
+        age: 29,
+      });
+
+      expect(user.name).to.equal('Jane');
+      expect(user.surname).to.equal('Jones');
+      expect(user.fullName).to.equal('Jane Jones');
+      expect(user).to.not.have.own.property('age');
+    });
+
+    it('Uses converters', () => {
+      class TestModel extends TypedModel {
+        static props = {
+          'updatedAt': { type: 'string', format: 'date-time' },
+        };
+      }
+
+      const createDate = new Date(2020, 5, 10);
+      const updateDate = new Date(2020, 5, 11);
+      const instance = new TestModel({ updatedAt: createDate.toISOString() });
+
+      instance.setValues({ updatedAt: updateDate.toISOString() });
+
+      expect(instance.updatedAt).to.eql(updateDate);
     });
   });
 });
