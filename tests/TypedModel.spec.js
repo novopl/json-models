@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { TypedModel, isModel, isModelClass } = require('../index');
+const { TypedModel, isModel, isModelClass } = require('../lib/TypedModel');
 
 
 class User extends TypedModel {
@@ -445,6 +445,7 @@ describe('TypedModel', () => {
       })
     });
 
+
     it('Format converters properly handle null value', () => {
       class TestModel extends TypedModel {
         static props = {
@@ -456,6 +457,52 @@ describe('TypedModel', () => {
 
       expect(instance.imageUrl).to.be.null;
       expect(instance.asObject().imageUrl).to.be.null;
+    });
+
+
+    it('Can implement an ANY type object by not defining properties', () => {
+      class Any extends TypedModel {
+        static schema = { additionalProperties: true };
+      }
+
+      const any = new Any({
+        msg: "hello",
+        value: 3.14159,
+      });
+
+      expect(any.msg).to.equal("hello");
+      expect(any.value).to.equal(3.14159);
+      expect(any.asObject()).to.eql({
+        msg: "hello",
+        value: 3.14159,
+      });
+    });
+
+    it('ANY pattern works with nested types', () => {
+      class Any extends TypedModel {
+        static schema = { additionalProperties: true };
+      }
+
+      class AnyNested extends TypedModel {
+        static props = {
+          'data': {type: Any},
+        };
+      }
+
+      const parent = new AnyNested({
+        data: {
+          msg: "hello",
+          value: 3.14159,
+        },
+      });
+
+      expect(parent.data).to.be.an.instanceof(Any);
+      expect(parent.asObject()).to.eql({
+        data: {
+          msg: "hello",
+          value: 3.14159,
+        },
+      })
     });
   });
 
@@ -596,6 +643,22 @@ describe('TypedModel', () => {
 
       expect(role.roles[1].roles[0]).to.be.an.instanceof(Role);
       expect(role.roles[1].roles[0].name).to.equal('SubSub1');
+    });
+  });
+
+
+  describe('static asObject()', () => {
+    it('Works', () => {
+      const userData = {
+        name: 'Jack',
+        surname: 'Crack'
+      };
+
+      expect(User.asObject(userData)).to.eql({
+        name: 'Jack',
+        surname: 'Crack',
+        fullName: 'Jack Crack',
+      })
     });
   });
 

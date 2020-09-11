@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const util = require('../util');
+const util = require('../lib/util');
 
 
 describe('json()', () => {
@@ -61,6 +61,33 @@ describe('mapObject()', () => {
       prop2_mod: 'value2',
       prop3_mod: 'value3',
     });
+  });
+});
+
+
+describe('isEmpty()', () => {
+  it('Returns true if null given', () => {
+    expect(util.isEmpty(null)).to.be.true;
+  });
+
+  it('Returns true if undefined given', () => {
+    expect(util.isEmpty(undefined)).to.be.true;
+  });
+
+  it('Returns true if empty object given', () => {
+    expect(util.isEmpty({})).to.be.true;
+  });
+
+  it('Returns true if empty Array given', () => {
+    expect(util.isEmpty([])).to.be.true;
+  });
+
+  it('Returns false if non-empty object given', () => {
+    expect(util.isEmpty({a: 1})).to.be.false;
+  });
+
+  it('Returns false if non-empty Array given', () => {
+    expect(util.isEmpty([1])).to.be.false;
   });
 });
 
