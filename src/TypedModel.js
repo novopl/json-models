@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import jsonschema from 'jsonschema';
-import format from 'date-fns/format';
 import util from './util';
 
 
 // Base class for app models.
-class TypedModel {
+export class TypedModel {
   static formats = new util.FormatManager();
 
   constructor(values) {
@@ -68,13 +66,6 @@ class TypedModel {
     }
 
     return schema;
-  }
-
-  // Validate a given set of values against the model schema.
-  static validate(values) {
-    const err = jsonschema.validate(values, this.getSchema());
-
-    return (err.errors.length > 0) ? err : undefined;
   }
 
   // Convert the model instance to a plain JS object.
@@ -127,10 +118,6 @@ class TypedModel {
     });
   }
 }
-
-
-const isModel = obj => obj instanceof TypedModel;
-const isModelClass = cls => cls.prototype instanceof TypedModel;
 
 
 // Collect properties from all base classes of the given model class.
@@ -211,7 +198,16 @@ function buildValue(name, schema, value, refs) {
 }
 
 
-function modelAsObject(model) {
+// Convert JSON array into a proper array object (with nested models properly
+// instantiated.
+function buildArray(name, schema, data, refs) {
+  return data.map((x, idx) => (
+    buildValue(`${name}[${idx}]`, schema.items, x, refs)
+  ));
+}
+
+
+export function modelAsObject(model) {
   const schema = model.constructor.getSchema();
   if (!schema.properties && schema.additionalProperties !== false) {
     return { ...model };
@@ -238,18 +234,14 @@ function modelAsObject(model) {
 }
 
 
-// Convert JSON array into a proper array object (with nested models properly
-// instantiated.
-function buildArray(name, schema, data, refs) {
-  return data.map((x, idx) => (
-    buildValue(`${name}[${idx}]`, schema.items, x, refs)
-  ));
-}
+export const isModel = obj => obj instanceof TypedModel;
+export const isModelClass = cls => cls.prototype instanceof TypedModel;
+
 
 // handle date and date-time formats out of the box (can be overwritten).
 TypedModel.formats.register('date', {
   load: str => str && new Date(str),
-  dump: val => val && format(val, 'yyyy-MM-dd'),
+  dump: val => val && util.formatDate(val, 'yyyy-MM-dd'),
 });
 TypedModel.formats.register('date-time', {
   load: str => str && new Date(str),
@@ -257,9 +249,9 @@ TypedModel.formats.register('date-time', {
 });
 
 
-module.exports = {
-  TypedModel,
-  isModel,
-  isModelClass,
-  modelAsObject,
-};
+// module.exports = {
+//   TypedModel,
+//   isModel,
+//   isModelClass,
+//   modelAsObject,
+// };

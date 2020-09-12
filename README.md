@@ -34,6 +34,12 @@ tree like structures. Arrays are of course also supported.
     npm i typed-models
     yarn add typed-models
 
+### Development
+
+Before running the tests you must build the lib using `yarn build`. The tests
+will import from `dist/`.
+
+TODO: Need to setup babel with jest so we can import from `src/`.
 
 ## Example
 
