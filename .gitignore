@@ -1,4 +1,7 @@
 # generated
+/module
+/lib
+/dist
 node_modules
 coverage
 
