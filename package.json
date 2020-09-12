@@ -2,11 +2,17 @@
   "name": "typed-models",
   "version": "1.4.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "browser": "./lib/index.js",
+  "module": "./module/index.js",
   "scripts": {
     "test": "jest ./tests",
     "lint": "eslint",
     "codecov": "codecov",
+    "build:browser": "cross-env BABEL_ENV=browser babel ./src --out-dir ./lib --source-maps --copy-files",
+    "build:module": "cross-env BABEL_ENV=module babel ./src --out-dir ./module --source-maps --copy-files",
+    "build:node": "babel ./src --out-dir ./dist --source-maps --copy-files",
+    "build": "npm run build:node && npm run build:browser && npm run build:module",
     "release": "yarn publish --non-interactive"
   },
   "author": "Mateusz Klos",
@@ -80,9 +86,15 @@
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.11.5",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "codecov": "^3.7.2",
+    "cross-env": "^7.0.2",
     "eslint": "^7.7.0",
     "faker": "^5.0.0",
     "jest": "^26.4.2"

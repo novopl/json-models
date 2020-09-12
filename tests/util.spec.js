@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const util = require('../lib/util');
+const util = require('../src/util');
 
 
 describe('json()', () => {
