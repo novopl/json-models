@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const jsonschema = require('jsonschema');
-const format = require('date-fns/format');
-const util = require('./util');
+import jsonschema from 'jsonschema';
+import format from 'date-fns/format';
+import util from './util';
 
 
 // Base class for app models.
