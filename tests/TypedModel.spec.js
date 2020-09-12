@@ -756,27 +756,6 @@ describe('TypedModel', () => {
   });
 
 
-  describe('validate()', () => {
-    it('Returns nothing if validation was successful', () => {
-      const err = User.validate({
-        name: 'John',
-        surname: 'Doe',
-      });
-
-      expect(err).to.be.undefined;
-    });
-
-
-    it('Returns error if validation failed', () => {
-      const err = User.validate({
-        firstName: 'John',
-        lastName: 'Doe',
-      });
-
-      expect(err).to.not.be.undefined;
-    });
-  });
-
   describe('setValues()', () => {
     it('Does not set property if not given in values', () => {
       const user = new User({ name: 'John', surname: 'Jones' });

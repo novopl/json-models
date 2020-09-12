@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export const json = (data, indent) => JSON.stringify(data, null, indent);
 
 
-const json = (data, indent) => JSON.stringify(data, null, indent);
-
-
-function mapObject(obj, mapperFn) {
+export function mapObject(obj, mapperFn) {
   return Object.fromEntries(
     Object.entries(obj)
       .map((entry, index) => mapperFn(...entry, index))
@@ -29,7 +27,7 @@ function mapObject(obj, mapperFn) {
 
 
 // A little helper to manage JSONSchema string formats.
-class FormatManager {
+export class FormatManager {
   constructor() {
     this.formats = {};
   }
@@ -55,7 +53,7 @@ class FormatManager {
 
 
 // Check if the given object is empty
-function isEmpty(obj) {
+export function isEmpty(obj) {
   if (!obj)
     return true;
 
@@ -63,9 +61,22 @@ function isEmpty(obj) {
 }
 
 
-module.exports = {
+export function formatDate(date) {
+  const year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
+
+  month = (month < 10) ? (`0${month}`) : month;
+  day = (day < 10) ? (`0${day}`) : day;
+
+  return `${year}-${month}-${day}`;
+}
+
+
+export default {
   json,
   mapObject,
   isEmpty,
   FormatManager,
+  formatDate,
 };

@@ -1,6 +1,6 @@
 {
   "name": "typed-models",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "",
   "main": "./dist/index.js",
   "browser": "./lib/index.js",
@@ -81,14 +81,10 @@
       ]
     }
   },
-  "dependencies": {
-    "date-fns": "^2.16.1",
-    "jsonschema": "^1.2.6"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.11.6",
     "@babel/core": "^7.11.6",
-    "@babel/plugin-proposal-class-properties": "^7.10.4",
     "@babel/preset-env": "^7.11.5",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "chai": "^4.2.0",

@@ -92,3 +92,19 @@ describe('isEmpty()', () => {
 });
 
 
+describe('formatDate()', () => {
+  it('Correctly converts the date to string', () => {
+    const examples = [
+      '2020-10-12',
+      '2020-05-07',
+      '1990-01-01',
+      '2200-12-31',
+    ]
+
+    examples.forEach(inDateStr => {
+      expect(util.formatDate(new Date(inDateStr))).to.equal(inDateStr);
+    });
+  });
+});
+
+
