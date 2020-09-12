@@ -247,11 +247,3 @@ TypedModel.formats.register('date-time', {
   load: str => str && new Date(str),
   dump: val => val && val.toISOString(),
 });
-
-
-// module.exports = {
-//   TypedModel,
-//   isModel,
-//   isModelClass,
-//   modelAsObject,
-// };

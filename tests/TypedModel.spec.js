@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { TypedModel, isModel, isModelClass } = require('../dist/TypedModel');
+const { TypedModel, isModel, isModelClass } = require('../lib/TypedModel');
 
 
 class User extends TypedModel {
