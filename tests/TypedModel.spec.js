@@ -720,13 +720,13 @@ describe('TypedModel', () => {
   });
 
 
-  describe('toJson()', () => {
+  describe('asJsonStr()', () => {
     it('includes properties', () => {
       const user = new User({
         name: 'John',
       });
 
-      const data = JSON.parse(user.asJson());
+      const data = JSON.parse(user.asJsonStr());
 
       expect(data).to.eql({
         name: 'John',
@@ -742,7 +742,7 @@ describe('TypedModel', () => {
         user: new User().asObject(),
       });
 
-      const data = JSON.parse(order.asJson());
+      const data = JSON.parse(order.asJsonStr());
 
       expect(data).to.eql({
         id: 5,

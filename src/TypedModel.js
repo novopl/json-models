@@ -82,8 +82,12 @@ export class TypedModel {
     return instance.asObject();
   }
 
-  // Convert the instance of the model to a JSON string representation.
+  // @deprecated see .asJsonStr()
   asJson(indent) {
+    return this.asJsonStr(indent);
+  }
+
+  asJsonStr(indent) {
     return JSON.stringify(this.asObject(), null, indent);
   }
 
