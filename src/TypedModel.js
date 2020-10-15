@@ -108,7 +108,7 @@ export class TypedModel {
       processed = Object.entries(schema.properties)
         // Skip read only fields and those that are not present in *values*.
         .filter(([propName, propSchema]) => (
-          values.hasOwnProperty(propName)
+          Object.prototype.hasOwnProperty.call(values, propName)
           && !propSchema.readOnly
         ))
         .reduce((result, [propName, propSchema]) => ({
@@ -221,8 +221,8 @@ export function modelAsObject(model) {
         const value = model[name];
         let processed;
 
-        if (value === undefined)
-          processed = undefined;
+        if (value === undefined || value === null)
+          processed = value;
         else if (isModelClass(propSchema.type))
           processed = modelAsObject(value);
         else if (propSchema.type === 'string' && typeof value !== 'string') {
